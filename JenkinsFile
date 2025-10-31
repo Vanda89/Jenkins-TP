@@ -1,0 +1,45 @@
+pipeline {
+    agent {label 'Node1'}
+    stages {
+        stage("Dependances") {
+            steps {
+                // Installer apache2
+                sh 'sudo apt update && sudo apt install -y apache2'
+             }
+        }
+        stage('Checkout') {
+            steps {
+                 // Récupération du code
+                 git branch: 'main', url: 'https://github.com/Vanda89/Jenkins-TP.git'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                // Copie des fichiers vers le serveur web (/var/www/html/)
+                sh 'sudo cp -r * /var/www/html/'
+            }
+        }
+        stage('Test') {
+            steps {
+                // Vérification du déploiement
+                sh 'curl -I http://localhost'
+            }
+        }
+    }
+   post {
+           success {
+               echo "✅ Déploiement terminé avec succès !"
+           }
+           failure {
+               echo "❌ Le déploiement a échoué !"
+           }
+           always {
+               echo "🧹 Nettoyage..."
+               sh '''
+                   sudo rm -rf /var/www/html/*
+                   sudo apt remove -y apache2
+                   sudo apt autoremove -y
+               '''
+           }
+       }
+}
